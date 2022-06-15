@@ -2,32 +2,76 @@
 import numpy as np
 import time
 import pygame
-##color values
-Color_BG=(10,10,10)
+import random
+
+# parameters
+
+n_infects = 2
+days_incub = 3
+days_infected = 5
+days_immunized = 15
+
+
+#color values
+
+Color_healthy=(255, 255, 255)
 Color_Grid = (40,40,40)
 Color_Die_Next =(170,170,170) #color of cells that die the next generation  
 Color_alive_next =(255,255,255) # color of cells that turn alive next generation
+Color_incub = (100, 100, 0)
+Color_sick = (255, 0, 0)
+Color_immune = (0, 0, 255)
+
+# healthy = 0
+# incubation = 1
+# sick = 2
+# immunized = 3
 
 def update (screen, cells, size, with_progress=False): # rules and stuff to update
     updated_cells = np.zeros((cells.shape[0],cells.shape[1]))
     #goes through each cell and updates the state
     for row, col in np.ndindex(cells.shape):
-           alive = np.sum(cells[row-1:row+2, col-1:col+2]) - cells [row,col] # checks cells around the cell
-           color = Color_BG if cells[row, col] == 0 else Color_alive_next
 
-           if cells [row,col] == 1: #if the cell is alive do the following
-               if alive < 2 or alive > 3: #dies when less than 2 or more than 3 are around it
-                   if with_progress:
-                       color = Color_Die_Next
-               elif 2<= alive or alive<=3: #turns/stays alive when 2 or 3 cells around it are alive
-                    updated_cells[row,col] = 1
-                    if with_progress: 
-                        color = Color_alive_next
-           else: # if cell is dead do the following
-               if alive == 3:
-                   updated_cells[row,col] = 1
-                   if with_progress:
-                       color= Color_alive_next
+           # if the cell is healthy
+           if cells[row, col] == 0:
+               color = Color_healthy
+
+            # if the cell is in incubation
+           if cells[row, col] in range(1, days_incub + 1):
+               updated_cells[row, col] = cells[row, col] + 1
+               color = Color_incub
+
+            # if the cell is sick
+           elif cells[row, col] in range(days_incub + 1, days_incub + days_infected + 1):
+               updated_cells[row, col] = cells[row, col] + 1
+               color = Color_sick
+               for i in range(n_infects):
+                   x = random.randint(-1, 1)
+                   y = random.randint(-1, 1)
+                   if updated_cells[(row + x) % cells.shape[0], (col + y) % cells.shape[1]] == 0:
+                      updated_cells[(row + x) % cells.shape[0], (col + y) % cells.shape[1]] = 1
+
+            # if the cell is immunized
+           elif cells[row, col] in range(days_incub + days_infected + 1, days_incub+days_infected+days_immunized + 1):
+               if cells[row, col] == days_incub + days_immunized + days_infected:
+                  updated_cells[row, col] = 0
+               else:
+                   updated_cells[row, col] = cells[row, col] + 1
+               color = Color_immune
+
+           # if cells [row,col] == 1: #if the cell is alive do the following
+           #     if alive < 2 or alive > 3: #dies when less than 2 or more than 3 are around it
+           #         if with_progress:
+           #             color = Color_Die_Next
+           #     elif 2<= alive or alive<=3: #turns/stays alive when 2 or 3 cells around it are alive
+           #          updated_cells[row,col] = 1
+           #          if with_progress:
+           #              color = Color_alive_next
+           # else: # if cell is dead do the following
+           #     if alive == 3:
+           #         updated_cells[row,col] = 1
+           #         if with_progress:
+           #             color= Color_alive_next
            pygame.draw.rect(screen,color,(col*size,row*size, size-1, size-1)) # makes a grid the size of a matrix
     return updated_cells
 
@@ -85,13 +129,13 @@ def main ():
                #when you click on a cell turns it into the opposite state
             if pygame.mouse.get_pressed()[0]:
                 pos = pygame.mouse.get_pos()
-                if cells [pos[1]//size,pos[0]//size]==1:
-                    cells [pos[1]//size,pos[0]//size]=0
+                if cells [pos[1]//size,pos[0]//size]==0:
+                    cells [pos[1]//size,pos[0]//size]=1
                     update (screen,cells,size)
                     pygame.display.update()
                     
                 else: 
-                    cells [pos[1]//size,pos[0]//size]=1
+                    cells [pos[1]//size,pos[0]//size]=0
                     update (screen,cells,size)
                     pygame.display.update()
               
@@ -171,7 +215,7 @@ def main ():
                     
             
 
-        time.sleep(0.05)
+        time.sleep(0.2)
        
 if __name__== '__main__':
     main()
