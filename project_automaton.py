@@ -36,16 +36,21 @@ immunity_disp_thresh = 0.5          #Threshold of immunity above which the count
 susceptibility_effect = 3           #controls influence of the susceptibility matrix. 0 = no effect. 
 #______________________________________________________________________________________________________________________________________________________________________________________________________________________
 
+
 def infect (row, col, return_matrix, noise): #infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(infection_length, infection_dev)) #decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
     pass
 
+
 def immunize (row, col, return_matrix): #immunizes a target cell using the immunization counter and updates it to the return matrix (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(immune_mean, immune_dev)) #decides strength of initial immunization, adds to progress matrix. Gaussian distribution.
     pass
+
+
 def incubate (row, col, return_matrix, noise): #incubates a target cell using the incubation counter and--y'know what, you get it by now
     return_matrix[row,col] = round(random.gauss(incub_length, incub_dev))
     pass
+
 
 def update (screen, cells, size, cell_infprogress, c, noise, with_progress=False, is_running=True): # rules and stuff to update
     updated_cells = np.zeros((cells.shape[0],cells.shape[1]))
@@ -138,8 +143,16 @@ def update (screen, cells, size, cell_infprogress, c, noise, with_progress=False
     w, h = pygame.display.get_surface().get_size()
     text_inf = pygame.font.SysFont(None, 30).render("Infected: "+str(np.count_nonzero(cells == 1)).center(6), True, Color_text) #all of this displays text counter
     text_inf_rect = text_inf.get_rect(center=(round(w*0.9), round(h*0.06)))
-    text_imm = pygame.font.SysFont(None, 30).render("Immune:   "+str(np.count_nonzero(cell_infprogress >= immunity_disp_thresh)).center(6), True, Color_text) #the w and h scalars are positions as % across the screen
+
+    # calculating number of immune cells larger than the threshold to display
+    n_of_imm = 0
+    for row, col in np.ndindex(cells.shape):
+        if cells[row, col] == 2 and cell_infprogress[row, col] >= immunity_disp_thresh:
+            n_of_imm += 1
+
+    text_imm = pygame.font.SysFont(None, 30).render("Immune:     " + str(n_of_imm).center(6), True, Color_text)
     text_imm_rect = text_imm.get_rect(center=(round(w*0.9), round(h*0.09)))
+    #text_imm = pygame.font.SysFont(None, 30).render("Immune:   "+str(np.count_nonzero(cell_infprogress >= immunity_disp_thresh)).center(6), True, Color_text) #the w and h scalars are positions as % across the screen
     text_dead = pygame.font.SysFont(None, 30).render("Dead:     "+str(np.count_nonzero(cells == 4)).center(6), True, Color_text)
     text_dead_rect = text_dead.get_rect(center=(round(w*0.9), round(h*0.12)))
     text_c = pygame.font.SysFont(None, 30).render("Step:     "+str(c).center(6), True, Color_text) 
