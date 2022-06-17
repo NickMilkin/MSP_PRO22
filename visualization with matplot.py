@@ -5,6 +5,7 @@ import numpy as np
 from numpy import newaxis
 import random
 from perlin_noise import PerlinNoise
+import pandas as pd
 
 
 ##color values
@@ -243,7 +244,10 @@ while simulationnr >0:
 final_data = np.zeros((timesteps+1,5)) #gives you averaged out array
 for timesteps, states in np.ndindex(final_data.shape):
     final_data[timesteps,states] = average_value(DATA,timesteps,states)
-
+    
+df = pd.DataFrame(final_data[:,:]) # this spits out the array above as an excel sheet, did not figure out how to do headers
+df.to_excel('Simulatioon.xlsx', index=False, header=False)
+#reminder for the columns [susceptible,incubated, infected, immune, dead]
 
 #_______________Animation part
 '''
