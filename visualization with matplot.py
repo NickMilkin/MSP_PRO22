@@ -135,7 +135,7 @@ def update (cells,cell_infprogress, noise, is_running = 1, showNoise=0):
 
 
 #_________________________________________________________________________
-def count(array):
+def count(array): # counts different states
 
     incubated = np.count_nonzero((array == 6))  
     immune = np.count_nonzero((array == 2))
@@ -166,10 +166,16 @@ def get_graphable_data_array(array): #gives you this whole thing as a string
 
     gdata = gdata.reshape((array.shape[2],5))
     return gdata 
-def x_values(matrix, i):
+def x_values(matrix, i): #function takes a column of matrix and turns it into list
     xlist= matrix[:,:,i]
     return xlist.flatten()
-
+def average_value (array,timestep,state): # gives you the array with averaged values
+    value=0
+    for numbers_of_simulation in range (1,simc):
+        value += array[numbers_of_simulation,timestep,state]
+    value /= (simc-1)
+    return value
+    
 
 #_____________________________________________________________________
 def normalize(array):
@@ -234,8 +240,9 @@ while simulationnr >0:
     simulationnr -=1
     simc +=1
 
-print (DATA.shape)
-print (DATA)
+final_data = np.zeros((timesteps+1,5)) #gives you averaged out array
+for timesteps, states in np.ndindex(final_data.shape):
+    final_data[timesteps,states] = average_value(DATA,timesteps,states)
 
 
 #_______________Animation part
@@ -254,12 +261,13 @@ anim = FuncAnimation(fig, update, frames=c, interval=100)
 
 #_______________________________ graph plotting part
 '''
-Slist = x_values(Graph,0)
-Inclist = x_values(Graph,1)   #this gets the list of integers to graph
-Inflist = x_values(Graph,2)
-Imlist = x_values(Graph,3)
-Dlist = x_values(Graph,4)
+Slist = x_values(final_data,0) #this gets the list of integers to graph
+Inclist = x_values(final_data,1)
+Inflist = x_values(final_data,2)
+Imlist = x_values(final_data,3)
+Dlist = x_values(final_data,4)
 t = [x for x in range (c+1)] 
+print (t)
 
 
 pyplot.plot(t,Slist, label = "Susceptible", linestyle ="-")
