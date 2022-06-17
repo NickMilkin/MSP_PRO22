@@ -5,7 +5,7 @@ import numpy as np
 from numpy import newaxis
 import random
 from perlin_noise import PerlinNoise
-# my stuff starts at line 145
+
 
 ##color values
 Color_BG=(60,60,60)
@@ -50,11 +50,6 @@ def immunize (row, col, return_matrix): #immunizes a target cell using the immun
 def incubate (row, col, return_matrix, noise): #incubates a target cell using the incubation counter and--y'know what, you get it by now
     return_matrix[row,col] = round(random.gauss(incub_length, incub_dev))
     pass
-
-
-
-
-
 
 def update (cells,cell_infprogress, noise, is_running = 1, showNoise=0):
     
@@ -139,17 +134,8 @@ def update (cells,cell_infprogress, noise, is_running = 1, showNoise=0):
 
 
 
-#everything above is from the other code, basically the rule how it is updated              
-
-
-#size:
-w=100
-h=100
-p=0.001 #propability of infected
-cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
-cell_infprogress = np.zeros((w,h))
 #_________________________________________________________________________
-def count(array): # counts the states
+def count(array):
 
     incubated = np.count_nonzero((array == 6))  
     immune = np.count_nonzero((array == 2))
@@ -160,7 +146,7 @@ def count(array): # counts the states
 
     return data
 
-def get_graphable_data(): #gives you number of susceptible, infected etc.
+def get_graphable_data(): #gives you this whole thing as a string 
     gdata = '' 
     for i in range(arraylist.shape[2]):
         x = count (arraylist [:,:,i])
@@ -169,19 +155,18 @@ def get_graphable_data(): #gives you number of susceptible, infected etc.
     gdata=gdata.rstrip(gdata[-1]) #gets rid of the last , in the string 
     return gdata 
 
-def get_graphable_data_array(): #gives you the number of susceptible, infected etc. as array
+def get_graphable_data_array(array): #gives you this whole thing as a string 
     gdata = np.array([])
     #gdata = gdata[:,newaxis]
     
-    for i in range(arraylist.shape[2]):
+    for i in range(array.shape[2]):
         x = np.array(count (arraylist [:,:,i]))
         #x = x[:,newaxis]
         gdata = np.append(gdata,x)
-    print (gdata.shape)
-    gdata = gdata.reshape((arraylist.shape[2],5)) 
-    return gdata 
 
-def x_values(matrix, i): #gives column of a matrix as list
+    gdata = gdata.reshape((array.shape[2],5))
+    return gdata 
+def x_values(matrix, i):
     xlist= matrix[:,:,i]
     return xlist.flatten()
 
@@ -194,23 +179,19 @@ def normalize(array):
         temp = (((i - np.min(array))*255)/diff_array)
         norm_array.append(temp)
     return norm_array
-#_____something from masons code
-print ('enter number of timesteps')
-timesteps = 365 # int(input())
 
-arraylist = cells[:, :,newaxis]
-datalist= count(cells)
-n_1= cells
-n_2= cells
-c=0
-#______ something from masons code
 random.seed()
 seed = 10
 noise1 = PerlinNoise(octaves = 4, seed = seed)
 noise2 = PerlinNoise(octaves = 8, seed = seed)
 noise3 = PerlinNoise(octaves = 16, seed = seed)
 noise4 = PerlinNoise(octaves = 32, seed = seed)
+np.set_printoptions(suppress=True,formatter={'all':lambda x: str(x)}) # makes values not gettinng printed in scientific notation
 
+#size:
+w=100
+h=100
+p=0.001
 noiseList= []
 for i in range(w):
     row = []
@@ -223,29 +204,43 @@ for i in range(w):
         row.append(noise_val)
     noiseList.append(row)
 noiseArray = np.array(normalize(np.array(noiseList)))
-#____________________________
-##update loop
-while timesteps > 0:
-    n_1= update (n_1, cell_infprogress, noiseArray)
-    d= n_1[:,:,newaxis]
-    arraylist = np.concatenate((arraylist,d),2)
-    timesteps -=1
-    print (c)
-    c+=1
-#gets the array of values
-Graph = np.array([get_graphable_data_array()])
-print (Graph.shape)
-#gives you the list for the graph
-Slist = x_values(Graph,0)
-Inclist = x_values(Graph,1)
-Inflist = x_values(Graph,2)
-Imlist = x_values(Graph,3)
-Dlist = x_values(Graph,4)
-t = [x for x in range (c+1)] 
-print (t)
+print ('enter number of timesteps')
 
+simulationnr = 5
+simc=1
+timesteps = 100 # int(input())
+DATA = np.empty((1,timesteps+1,5))
+
+print (DATA.shape)
+while simulationnr >0:
+    print ("Simulation #"+str(simc)+ " running")
+    cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
+    cell_infprogress = np.zeros((w,h))
+    arraylist = cells[:, :,newaxis]
+    datalist= count(cells)
+    n_1= cells
+    c=0
+    ts = timesteps
+    while ts > 0:
+        n_1= update (n_1, cell_infprogress, noiseArray)
+        d= n_1[:,:,newaxis]
+        arraylist = np.concatenate((arraylist,d),2)
+        ts -=1
+        print ("Simulation #"+str(simc)+ " running step: "+str(c+1))
+        c+=1
+    
+    Graph = np.array([get_graphable_data_array(arraylist)])
+    DATA= np.concatenate((DATA,Graph),0)
+    simulationnr -=1
+    simc +=1
+
+print (DATA.shape)
+print (DATA)
+
+
+#_______________Animation part
 '''
-fig, ax = pyplot.subplots() # this was for the animation
+fig, ax = pyplot.subplots()
 
 def update(frames):
     
@@ -253,8 +248,20 @@ def update(frames):
     pyplot.pause(0.1)
     
 
-anim = FuncAnimation(fig, update, frames=c, interval=100)
-''' # this plots the graph
+anim = FuncAnimation(fig, update, frames=c, interval=100) 
+'''
+#________________________________
+
+#_______________________________ graph plotting part
+'''
+Slist = x_values(Graph,0)
+Inclist = x_values(Graph,1)   #this gets the list of integers to graph
+Inflist = x_values(Graph,2)
+Imlist = x_values(Graph,3)
+Dlist = x_values(Graph,4)
+t = [x for x in range (c+1)] 
+
+
 pyplot.plot(t,Slist, label = "Susceptible", linestyle ="-")
 pyplot.plot(t,Inclist, label = "Incubated", linestyle ="-")
 pyplot.plot(t,Inflist, label = "Infected", linestyle ="-")
@@ -262,5 +269,5 @@ pyplot.plot(t,Imlist, label = "Immune", linestyle ="-")
 pyplot.plot(t,Dlist, label = "Dead", linestyle ="-")
 pyplot.legend()
 pyplot.show()
-
+'''
 
