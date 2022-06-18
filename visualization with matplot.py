@@ -168,7 +168,7 @@ def get_graphable_data_array(array): #gives you this whole thing as a string
     gdata = gdata.reshape((array.shape[2],5))
     return gdata 
 def x_values(matrix, i): #function takes a column of matrix and turns it into list
-    xlist= matrix[:,:,i]
+    xlist= matrix[:,i]
     return xlist.flatten()
 def average_value (array,timestep,state): # gives you the array with averaged values
     value=0
