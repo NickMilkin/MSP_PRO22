@@ -218,9 +218,8 @@ simc=1
 timesteps = 100 # int(input())
 DATA = np.empty((1,timesteps+1,5))
 
-print (DATA.shape)
 while simulationnr >0:
-    print ("Simulation #"+str(simc)+ " running")
+    print ("Simulation #"+str(simc)+ " running", end = "\r")
     cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
     cell_infprogress = np.zeros((w,h))
     arraylist = cells[:, :,newaxis]
@@ -233,20 +232,23 @@ while simulationnr >0:
         d= n_1[:,:,newaxis]
         arraylist = np.concatenate((arraylist,d),2)
         ts -=1
-        print ("Simulation #"+str(simc)+ " running step: "+str(c+1))
+        print ("Simulation #"+str(simc)+ " running step: "+str(c+1), end = "\r")
         c+=1
     
     Graph = np.array([get_graphable_data_array(arraylist)])
     DATA= np.concatenate((DATA,Graph),0)
     simulationnr -=1
     simc +=1
-
+print ('Averaging data.')
 final_data = np.zeros((timesteps+1,5)) #gives you averaged out array
 for timesteps, states in np.ndindex(final_data.shape):
     final_data[timesteps,states] = average_value(DATA,timesteps,states)
-    
+print ("saving.")
+filename = 'Simulatioon.xlsx'
 df = pd.DataFrame(final_data[:,:]) # this spits out the array above as an excel sheet, did not figure out how to do headers
 df.to_excel('Simulatioon.xlsx', index=False, header=False)
+print ("saved as " + filename)
+print ("done.")
 #reminder for the columns [susceptible,incubated, infected, immune, dead]
 
 #_______________Animation part
@@ -271,7 +273,7 @@ Inflist = x_values(final_data,2)
 Imlist = x_values(final_data,3)
 Dlist = x_values(final_data,4)
 t = [x for x in range (c+1)] 
-print (t)
+
 
 
 pyplot.plot(t,Slist, label = "Susceptible", linestyle ="-")
