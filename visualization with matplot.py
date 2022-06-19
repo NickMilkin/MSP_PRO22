@@ -45,6 +45,7 @@ h=100
 p=0.001
 timesteps = 100 # int(input())
 simulationnr = 5
+infectedstart = 49
 
 def infect (row, col, return_matrix, noise): #infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(infection_length, infection_dev)) #decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
@@ -227,7 +228,8 @@ DATA = np.empty((1,timesteps+1,5))
 
 while simulationnr >0:
     print ("Simulation #"+str(simc)+ " running", end = "\r")
-    cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
+    #cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
+    cells = start_with_x(infectedstart)
     cell_infprogress = np.zeros((w,h))
     arraylist = cells[:, :,newaxis]
     datalist= count(cells)
