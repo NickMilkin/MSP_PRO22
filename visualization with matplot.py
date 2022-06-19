@@ -39,7 +39,12 @@ immune_fade = 0.02                  #amount(as a % of maximum immunity(1), not c
 immunity_disp_thresh = 0.5          #Threshold of immunity above which the counter text considers a cell to be "immune". Only affects counter text.
 susceptibility_effect = 3           #controls influence of the susceptibility matrix. 0 = no effect. 
 #______________________________
-
+#size:
+w=100
+h=100
+p=0.001
+timesteps = 100 # int(input())
+simulationnr = 5
 
 def infect (row, col, return_matrix, noise): #infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(infection_length, infection_dev)) #decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
@@ -195,10 +200,7 @@ noise3 = PerlinNoise(octaves = 16, seed = seed)
 noise4 = PerlinNoise(octaves = 32, seed = seed)
 np.set_printoptions(suppress=True,formatter={'all':lambda x: str(x)}) # makes values not gettinng printed in scientific notation
 
-#size:
-w=100
-h=100
-p=0.001
+
 noiseList= []
 for i in range(w):
     row = []
@@ -213,9 +215,8 @@ for i in range(w):
 noiseArray = np.array(normalize(np.array(noiseList)))
 print ('enter number of timesteps')
 
-simulationnr = 5
 simc=1
-timesteps = 100 # int(input())
+
 DATA = np.empty((1,timesteps+1,5))
 
 while simulationnr >0:
