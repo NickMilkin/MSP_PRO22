@@ -239,7 +239,7 @@ while simulationnr >0:
         d= n_1[:,:,newaxis]
         arraylist = np.concatenate((arraylist,d),2)
         ts -=1
-        print ("Simulation #"+str(simc)+ " running step: "+str(c+1), end = "\r")
+        print ("Simulation #"+str(simc)+ " running step: "+str(c+1))
         c+=1
     
     Graph = np.array([get_graphable_data_array(arraylist)])
