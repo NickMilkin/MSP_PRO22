@@ -141,6 +141,12 @@ def update (cells,cell_infprogress, noise, is_running = 1, showNoise=0):
 
 
 #_________________________________________________________________________
+def start_with_x (x): # function that generates a grid with specific number of infected
+        REPLACE_COUNT = int(x)
+        REPLACE_WITH = 1
+        cells = np.zeros((w,h))
+        cells.flat[np.random.choice((h*w), REPLACE_COUNT, replace=False)] = REPLACE_WITH
+        return cells
 def count(array): # counts different states
 
     incubated = np.count_nonzero((array == 6))  
