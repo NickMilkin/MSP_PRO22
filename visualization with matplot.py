@@ -96,7 +96,7 @@ def update(cells, cell_infprogress, noise, is_running=1, show_noise=0):
         if show_noise:
             print()
         else:
-            alive = np.sum(np.mod(cells[row - infection_range: row + 1 + infection_range, col - infection_range: col + 1 + infection_range], 2)) - cells[row, col] % 2 # checks cells around the cell. The modulo operator makes sure immune cells aren't counted.
+            alive = np.sum(np.mod(cells[(row - infection_range)%h: (row + 1 + infection_range)%h,(col - infection_range)%w: (col + 1 + infection_range)%w], 2)) - cells[row, col] % 2 # checks cells around the cell. The %2 makes sure immune cells aren't counted.
             if cells[row, col] == 0:
                 color = Color_BG
             elif cells[row, col] == 2:      # nightmare equation sets the color for the cell based on immunity
