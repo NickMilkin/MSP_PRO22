@@ -283,7 +283,7 @@ print('enter number of timesteps')
 
 simc = 1
 
-DATA = np.empty((1, timesteps + 1, 5))
+
 
 
 while simulationnr > 0:
@@ -303,22 +303,20 @@ while simulationnr > 0:
         ts -= 1
         print ("Simulation #" + str(simc) + " running step: " + str(c+1))
         c += 1
-    
+    print ("saving...")
     Graph = np.array([get_graphable_data_array(arraylist)])
-    DATA = np.concatenate((DATA, Graph), 0)
+    sheet[page].refresh() #refreshes sheet to minimize overwrite chance
+    sheet[page].append_table(Graph[0,:,:].tolist(), start='A2', end=None, dimension='ROWS', overwrite=False,)
+    print ("saved to page "+str(page)+" of file \'"+ sheet.title+"\' with id=\'"+file_id+"\'")
+    
     simulationnr -= 1
     simc += 1
 
-print('Averaging data.')
-final_data = np.zeros((timesteps + 1, 5))            # gives you averaged out array
-for timesteps, states in np.ndindex(final_data.shape):
-    final_data[timesteps, states] = average_value(DATA, timesteps, states)
-print ("saving...")
-sheet[page].refresh() #refreshes sheet to minimize overwrite chance
-sheet[page].update_values('A2',final_data.tolist()) #saves to google sheets starting at cell A2
-print(final_data)
-print ("saved to page "+str(page)+" of file \'"+ sheet.title+"\' with id=\'"+file_id+"\'")
+
+
+
 print ("done.")
+
 # reminder for the columns [susceptible,incubated, infected, immune, dead]
 
 
