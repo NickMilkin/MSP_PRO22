@@ -1,6 +1,6 @@
 import pygsheets
-from matplotlib import pyplot
-from matplotlib.animation import FuncAnimation
+#from matplotlib import pyplot
+#from matplotlib.animation import FuncAnimation
 import numpy as np
 from numpy import newaxis
 import random
