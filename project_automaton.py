@@ -1,8 +1,13 @@
+import pygsheets
 import numpy as np
-import time
-import pygame
+from numpy import newaxis
 import random
 from perlin_noise import PerlinNoise
+
+file_id = '1w17xSO4v-7WH8LX8_0yLnUSIUMR07nOET6M6n80ZiEw' #IMPORTANT! selects file to edit. This is part of the URL of the file.
+client = pygsheets.authorize(service_account_file='automaton-project-ec4be5ef0418.json') #google sheets authorization JSON name and location. You need to download this from github and it has to be in the same directory as this program.
+sheet = client.open_by_key(file_id) #opens file 
+page = 0 #sets working page number. IMPORTANT! Set to 0 for ebola, 1 for flu, 2 for covid, 3 for H1N1.
 
 ##color values
 Color_BG=(60,60,60)
@@ -22,43 +27,46 @@ skipInput = True #This is here because I was tired of having to type the step nu
 #SIMULATION VARIABLES: Change these to tweak infection probabilities and initial conditions                                     
 ppi_chance = 0.02                   #chance that each infected neighbor adds to a cell's probability of infection EACH STEP. 1 = 100%. Directly controls infection rate.
 infection_range = 1                 #number of cells away that a cell can be infected. Must be an integer. If you're unsure what to set this, make it 1.
-infection_length = 20               #number of steps that an infection lasts, on average                                                  
+infection_length = 9               #number of steps that an infection lasts, on average                                                  
 infection_dev = 3                   #std. deviation in number of steps an infection lasts                                                  
-death_chance = 0.01                 #chance that an infected cell dies after infection.
-incub_length = 3                    #incubation time before disease is contagious.
+death_chance = 0.74                 #chance that an infected cell dies after infection.
+incub_length = 39                    #incubation time before disease is contagious.
 incub_dev = 1                       #std. deviation in number of steps incubation lasts
 #immunity_strength = 0.90           #Strength of immunity, 1 means impossible to reinfect. [Currently redundant.]
 immunization_chance = 0             #Chance that a random uninfected cell will immunize itself (analagous to vaccine availability)  
-immune_mean = 0.90                  #mean strength of assigned immunization
+immune_mean = 0.95                  #mean strength of assigned immunization
 immune_dev = 0.05                   #std. deviation in number of steps immunization lasts
-immune_fade = 0.02                  #amount(as a % of maximum immunity(1), not current immunity) that immunity fades by each step. 0 means permanent immunity
+immune_fade = 0.00                  #amount(as a % of maximum immunity(1), not current immunity) that immunity fades by each step. 0 means permanent immunity
 immunity_disp_thresh = 0.5          #Threshold of immunity above which the counter text considers a cell to be "immune". Only affects counter text.
-susceptibility_effect = 3           #controls influence of the susceptibility matrix. 0 = no effect. 
-#______________________________________________________________________________________________________________________________________________________________________________________________________________________
+susceptibility_effect = 3           #controls influence of the susceptibility matrix. 0 = no effect.
 
+#______________________________
+#size:
+w=30
+h=30
+p=0.001
+timesteps = 10 # int(input())
+simulationnr = 10
+infectedstart = 49
 
 def infect (row, col, return_matrix, noise): #infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(infection_length, infection_dev)) #decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
     pass
 
-
 def immunize (row, col, return_matrix): #immunizes a target cell using the immunization counter and updates it to the return matrix (normally, one of the progress matrices)
     return_matrix[row,col] = round(random.gauss(immune_mean, immune_dev)) #decides strength of initial immunization, adds to progress matrix. Gaussian distribution.
     pass
-
-
 def incubate (row, col, return_matrix, noise): #incubates a target cell using the incubation counter and--y'know what, you get it by now
     return_matrix[row,col] = round(random.gauss(incub_length, incub_dev))
     pass
 
-
-def update (screen, cells, size, cell_infprogress, c, noise, with_progress=False, is_running=True): # rules and stuff to update
-    updated_cells = np.zeros((cells.shape[0],cells.shape[1]))
-    updated_infprogress = cell_infprogress
-    #goes through each cell and updates the state
-    for row, col in np.ndindex(cells.shape):
+def update (cells,cell_infprogress, noise, is_running = 1, showNoise=0):
+    
+     updated_cells = np.zeros((cells.shape[0],cells.shape[1]))
+     updated_infprogress = cell_infprogress
+     for row, col in np.ndindex(cells.shape):
         if showNoise:
-            color = (2*max(0,127-noise[row,col]),2*max(0,127-noise[row,col]),2*max(0,127-noise[row,col]))
+            print()
         else:
             alive = np.sum(np.mod(cells[row-infection_range:row+1+infection_range, col-infection_range:col+1+infection_range], 2)) - cells[row,col] % 2 # checks cells around the cell. The modulo operator makes sure immune cells aren't counted.
             if cells[row, col] == 0:
@@ -77,94 +85,114 @@ def update (screen, cells, size, cell_infprogress, c, noise, with_progress=False
                     if random.random() > death_chance:
                         updated_cells[row,col] = 2
                         immunize(row,col,updated_infprogress) #immunize it if it passes the death check
-                        if with_progress:
-                            color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
+                        #if with_progress:
+                        #    color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
                     else:
                         updated_cells[row,col] = 4 #kill it if it doesn't pass death check
-                        if with_progress:
-                            color = Color_dead
+                        #if with_progress:
+                        #    color = Color_dead
                 elif cell_infprogress[row, col] > 0: #stays infected if progress matrix still has time left
                     updated_cells[row,col] = 1
                     if is_running:
                         updated_infprogress[row,col]-=1
-                    if with_progress: 
-                        color = Color_alive_next
+                   # if with_progress: 
+                    #    color = Color_alive_next
             elif cells[row,col] == 0: # if cell is uninfected do the following
                 if random.random() <= (10**(susceptibility_effect*(((255-noise[row,col])/255)-0.5)))*alive*ppi_chance:#higher number of active neighbors = higher chance of infection
                     updated_cells[row,col] = 6                                                                      #Also adds the effect of the susceptibility array
                     incubate(row, col, updated_infprogress, noise) #incubates cell to infprogress matrix
-                    if with_progress:
-                        color= Color_incub
+                    #if with_progress:
+                       # color= Color_incub
                 else:
                     if random.random() <= immunization_chance:
                         updated_cells[row, col] = 2
                         immunize(row,col,updated_infprogress)
-                        if with_progress:#same horrible equation
-                            color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
+                       # if with_progress:#same horrible equation
+                        #    color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
             elif cells[row,col] == 2: #if cell is immune do the following
                 if random.random() <= (1-cell_infprogress[row,col]) * alive * ppi_chance: #small chance that immunized cells can be reinfected
                     updated_cells[row,col] = 6
                     incubate(row, col, updated_infprogress, noise) #infects cell to infprogress matrix
-                    if with_progress:
-                        color= Color_incub
+                   # if with_progress:
+                    #    color= Color_incub
                 else:
                     updated_cells[row,col] = 2
                     if cell_infprogress[row,col] > 0:
                         if is_running:
                             updated_infprogress[row,col]-=immune_fade #fade immunity
-                        if with_progress:
-                            color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
+                        #if with_progress:
+                        #    color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
                     else:
                         updated_infprogress[row,col] = 0
             elif cells[row,col] == 6:
                 if cell_infprogress[row,col] > 0:
                         updated_cells[row,col] = 6
                         if is_running:
-                            updated_infprogress[row,col]-=1
-                        if with_progress:
-                            color= Color_incub
+                           updated_infprogress[row,col]-=1
+                #       if with_progress:
+                #           color= Color_incub
                 else:
                     updated_cells[row,col] = 1
                     infect(row, col, updated_infprogress, noise)
-                    color = Color_alive_next
+                    #color = Color_alive_next
             else:
                 updated_cells[row,col] = 4 #Dead cells stay dead. Also, deals with any weird values that might somehow pop up in the array by killing them.
-                if with_progress:
-                    color = Color_dead
+               # if with_progress:
+               #     color = Color_dead
+     return updated_cells
+
+
+
+#_________________________________________________________________________
+def start_with_x (x): # function that generates a grid with specific number of infected
+        REPLACE_COUNT = int(x)
+        REPLACE_WITH = 1
+        cells = np.zeros((w,h))
+        cells.flat[np.random.choice((h*w), REPLACE_COUNT, replace=False)] = REPLACE_WITH
+        return cells
+def count(array): # counts different states
+
+    incubated = np.count_nonzero((array == 6))  
+    immune = np.count_nonzero((array == 2))
+    infected = np.count_nonzero ((array==1))
+    dead = np.count_nonzero((array==4))
+    susceptible = (array.shape[0] * array.shape[1]) - (incubated+immune+infected+dead)
+    data = [susceptible,incubated, infected, immune, dead]
+
+    return data
+
+def get_graphable_data(): #gives you this whole thing as a string 
+    gdata = '' 
+    for i in range(arraylist.shape[2]):
+        x = count (arraylist [:,:,i])
         
-        try:
-            pygame.draw.rect(screen,color,(col*size,row*size, size-int(useGrid), size-int(useGrid)))
-        except:         # makes a grid the size of a matrix
-            print("Noise value at "+str([row,col])+": "+str(noise[row,col]))
-            print(color)
-            print(min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
-            print(cell_infprogress[row,col])
-                
-    w, h = pygame.display.get_surface().get_size()
-    text_inf = pygame.font.SysFont(None, 30).render("Infected: "+str(np.count_nonzero(cells == 1)).center(6), True, Color_text) #all of this displays text counter
-    text_inf_rect = text_inf.get_rect(center=(round(w*0.9), round(h*0.06)))
+        gdata = gdata + str(x)+ ','
+    gdata=gdata.rstrip(gdata[-1]) #gets rid of the last , in the string 
+    return gdata 
 
-    # calculating number of immune cells larger than the threshold to display
-    n_of_imm = 0
-    for row, col in np.ndindex(cells.shape):
-        if cells[row, col] == 2 and cell_infprogress[row, col] >= immunity_disp_thresh:
-            n_of_imm += 1
+def get_graphable_data_array(array): #gives you this whole thing as a string 
+    gdata = np.array([])
+    #gdata = gdata[:,newaxis]
+    
+    for i in range(array.shape[2]):
+        x = np.array(count (arraylist [:,:,i]))
+        #x = x[:,newaxis]
+        gdata = np.append(gdata,x)
 
-    text_imm = pygame.font.SysFont(None, 30).render("Immune:     " + str(n_of_imm).center(6), True, Color_text)
-    text_imm_rect = text_imm.get_rect(center=(round(w*0.9), round(h*0.09)))
-    #text_imm = pygame.font.SysFont(None, 30).render("Immune:   "+str(np.count_nonzero(cell_infprogress >= immunity_disp_thresh)).center(6), True, Color_text) #the w and h scalars are positions as % across the screen
-    text_dead = pygame.font.SysFont(None, 30).render("Dead:     "+str(np.count_nonzero(cells == 4)).center(6), True, Color_text)
-    text_dead_rect = text_dead.get_rect(center=(round(w*0.9), round(h*0.12)))
-    text_c = pygame.font.SysFont(None, 30).render("Step:     "+str(c).center(6), True, Color_text) 
-    text_c_rect = text_c.get_rect(center=(round(w*0.1), round(h*0.94)))
-    if not showNoise:
-        screen.blit(text_inf, text_inf_rect)
-        screen.blit(text_c, text_c_rect)
-        screen.blit(text_inf, text_inf_rect) #draws all the text to the screen
-        screen.blit(text_imm, text_imm_rect)
-        screen.blit(text_dead, text_dead_rect)
-    return updated_cells,updated_infprogress
+    gdata = gdata.reshape((array.shape[2],5))
+    return gdata 
+def x_values(matrix, i): #function takes a column of matrix and turns it into list
+    xlist= matrix[:,i]
+    return xlist.flatten()
+def average_value (array,timestep,state): # gives you the array with averaged values
+    value=0
+    for numbers_of_simulation in range (1,simc):
+        value += array[numbers_of_simulation,timestep,state]
+    value /= (simc-1)
+    return value
+    
 
+#_____________________________________________________________________
 def normalize(array):
     norm_array = []
     diff_array = np.max(array) - np.min(array)    
@@ -173,220 +201,97 @@ def normalize(array):
         norm_array.append(temp)
     return norm_array
 
-def main ():
-    random.seed()
-    seed = random.random()
-    noise1 = PerlinNoise(octaves = 4, seed = seed)
-    noise2 = PerlinNoise(octaves = 8, seed = seed)
-    noise3 = PerlinNoise(octaves = 16, seed = seed)
-    noise4 = PerlinNoise(octaves = 32, seed = seed)
-    
-    pygame.init() # initiates the visual part
-    height= 1200 # some
-    width = 800 # variables to determine size of our field
-    size= 10
-    h= int(height/size)
-    w= int(width/size)
-    screen = pygame.display.set_mode((height,width))
+random.seed()
+seed = 10
+noise1 = PerlinNoise(octaves = 4, seed = seed)
+noise2 = PerlinNoise(octaves = 8, seed = seed)
+noise3 = PerlinNoise(octaves = 16, seed = seed)
+noise4 = PerlinNoise(octaves = 32, seed = seed)
+np.set_printoptions(suppress=True,formatter={'all':lambda x: str(x)}) # makes values not gettinng printed in scientific notation
 
-    global showNoise
-    showNoise = False
-    noiseList= []
-    for i in range(w):
-        row = []
-        for j in range(h):
-            noise_val = noise1([i/w, j/h])
-            noise_val += 0.5 * noise2([i/w, j/h])
-            noise_val += 0.25 * noise3([i/w, j/h])
-            noise_val += 0.125 * noise4([i/w, j/h])
 
-            row.append(noise_val)
-        noiseList.append(row)
-    noiseArray = np.array(normalize(np.array(noiseList)))
-    cells = np.zeros((w,h))
-    cell_infprogress = np.zeros((w,h)) #adds new array to track cell sub-state, meaning progress of the infection and strength of immunization.
-    c=0 #counter to keep track of at what step we are
-    #noiseArray = np.array([[noise([i/h, j/w]) for j in range(h)] for i in range(w)])
-    screen.fill(Color_Grid)
-    update(screen,cells,size, cell_infprogress, c, noiseArray)
+noiseList= []
+for i in range(w):
+    row = []
+    for j in range(h):
+        noise_val = noise1([i/w, j/h])
+        noise_val += 0.5 * noise2([i/w, j/h])
+        noise_val += 0.25 * noise3([i/w, j/h])
+        noise_val += 0.125 * noise4([i/w, j/h])
 
-    gridWidth = 1
-    running = False
-  
-    pygame.display.update()
-    #function to make a matrix with specific numbers of cells alive at random locations
-    def start_with_x (num_inf,num_imm = 0):
-        REPLACE_COUNT_INF = int(num_inf)
-        REPLACE_COUNT_IMM = int(num_imm)
-        REPLACE_WITH_INF = 1
-        REPLACE_WITH_IMM = 1
-        cells = np.zeros((w,h))
-        cell_infprogress = np.zeros((w,h))
-        cells.flat[np.random.choice((h*w), REPLACE_COUNT_INF, replace=False)] = REPLACE_WITH_INF #randomly assigns cells to be 1
-        if num_imm > 0:
-            cells.flat[np.random.choice((h*w), REPLACE_COUNT_IMM, replace=False)] = REPLACE_WITH_IMM #randomly assigns cells to be 2 if num_imm is defined
-            for row,col in np.ndindex(cells.shape):
-                if cells[row,col] == 2:
-                    immunize(row,col,cell_infprogress)
-        for row, col in np.ndindex(cells.shape):
-            if cells[row,col] == 1:
-                infect(row, col, cell_infprogress, noiseArray)
-        return cells,cell_infprogress
-    
-    # the following allows us only let the game go on for a specific amount of time
-    if not skipInput:
-        print ("please enter the number of timesteps")
-        timesteps= int(input())
-    else:
-        timesteps=defaultNumSteps
-        x=timesteps
-    running = False
-    cells = np.zeros((w,h))                 #This is clearly redundant, but for some reason it prevents the program from trying to run while you assign cells.
+        row.append(noise_val)
+    noiseList.append(row)
+noiseArray = np.array(normalize(np.array(noiseList)))
+print ('enter number of timesteps')
+
+simc=1
+
+DATA = np.empty((1,timesteps+1,5))
+
+while simulationnr >0:
+    print ("Simulation #"+str(simc)+ " running", end = "\r")
+    #cells = np.random.choice([1,0], h*w, p=[p, 1-p]).reshape(w, h)
+    cells = start_with_x(infectedstart)
     cell_infprogress = np.zeros((w,h))
+    arraylist = cells[:, :,newaxis]
+    datalist= count(cells)
+    n_1= cells
+    c=0
+    ts = timesteps
+    while ts > 0:
+        n_1= update (n_1, cell_infprogress, noiseArray)
+        d= n_1[:,:,newaxis]
+        arraylist = np.concatenate((arraylist,d),2)
+        ts -=1
+        print ("Simulation #"+str(simc)+ " running step: "+str(c+1))
+        c+=1
     
+    Graph = np.array([get_graphable_data_array(arraylist)])
+    DATA= np.concatenate((DATA,Graph),0)
+    simulationnr -=1
+    simc +=1
+print ('Averaging data.')
+final_data = np.zeros((timesteps+1,5)) #gives you averaged out array
+for timesteps, states in np.ndindex(final_data.shape):
+    final_data[timesteps,states] = average_value(DATA,timesteps,states)
+print ("saving...")
+sheet[page].refresh() #refreshes sheet to minimize overwrite chance
+sheet[page].update_values('A1',final_data.tolist()) #saves to google sheets starting at cell A1
+print(final_data)
+print ("saved to page "+str(page)+" of file \'"+ sheet.title+"\' with id=\'"+file_id+"\'")
+print ("done.")
+#reminder for the columns [susceptible,incubated, infected, immune, dead]
+
+#_______________Animation part
+'''
+fig, ax = pyplot.subplots()
+
+def update(frames):
     
-    #game initiating loop
-    while True:
-        
-        
-        for event in pygame.event.get():
-            
-            if event.type == pygame.QUIT: #makes us able to close the game
-                pygame.quit()
-                return
-           #pauses when pressing space, continues when pressing it again
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    running = not running
-                    update (screen, cells, size, cell_infprogress, c, noiseArray)
-                    pygame.display.update()
-                    if running == True:
-                        print("Beginning with " +str(np.count_nonzero(cells == 1))+" infected cells, "+str(np.count_nonzero(cells == 2))+" immune cells, and "+str(np.count_nonzero(cells == 4))+" dead cells.")
-                        print ("running.") #Above statement prints current population
-                    elif running == False:
-                        print ("paused.")
-                elif event.key == pygame.K_ESCAPE: #resets matrix and fills random spots with one, when pressing esc
-                    running = False
-                    x = timesteps
-                    c = 0
-                    if pygame.key.get_pressed()[pygame.K_LSHIFT]:
-                        cells = np.random.choice([2,1,0], w*h, p=[0.05, 0.15, 0.8]).reshape(w, h)#when pressing shift, 15% chance for cell to be active and 5% chance for immunized
-                        for row, col in np.ndindex(cells.shape):
-                            if cells[row,col] == 2:
-                                immunize(row,col,cell_infprogress)
-                    else:
-                        cells = np.random.choice([1,0], w*h, p=[0.15, 1-0.15]).reshape(w, h)# chance for a field to be alive is 15%
-                    for row, col in np.ndindex(cells.shape):
-                        if cells[row,col] == 1:
-                            infect(row, col, cell_infprogress, noiseArray)
-                    update (screen, cells, size, cell_infprogress, c, noiseArray)
-                    pygame.display.update()
-                    print("reset random start")
-                elif event.key == pygame.K_q: #toggle susceptibility view
-                    running = False
-                    showNoise = not showNoise
-                    update (screen,cells,size,cell_infprogress, c, noiseArray)
-                    pygame.display.update()
-                elif event.key == pygame.K_r: #resets whole matrix to 0(dead) when pressing R
-                    running = False
-                    c=0
-                    x= timesteps
-                    cells = np.zeros((w,h))
-                    cell_infprogress = np.zeros((w,h))
-                    update(screen, cells, size, cell_infprogress, c, noiseArray)
-                    pygame.display.update()
-                    print("cleared field")
-                if event.key == pygame.K_w:#random start with 500 cells alive
-                    running = False
-                    if pygame.key.get_pressed()[pygame.K_LSHIFT]: #pressing shift will do this but also randomly immunize 500 cells
-                        cells, cell_infprogress = start_with_x(500,500)
-                    else:
-                        cells, cell_infprogress = start_with_x(500)
-                    update (screen, cells, size, cell_infprogress, c, noiseArray)
-                    pygame.display.update()  
-                    print("random start with x")
+    pyplot.imshow(arraylist [:,:,frames])
+    pyplot.pause(0.1)
+    
+
+anim = FuncAnimation(fig, update, frames=c, interval=100) 
+'''
+#________________________________
+
+#_______________________________ graph plotting part
+'''
+Slist = x_values(final_data,0) #this gets the list of integers to graph
+Inclist = x_values(final_data,1)
+Inflist = x_values(final_data,2)
+Imlist = x_values(final_data,3)
+Dlist = x_values(final_data,4)
+t = [x for x in range (c+1)] 
 
 
-               #manual cell assignment 
-            if pygame.mouse.get_pressed()[0]:
-                keys = pygame.key.get_pressed()
-                pos = pygame.mouse.get_pos()
-                if keys[pygame.K_LSHIFT]:   #Shift-left-click makes a cell immune
-                    cells [pos[1]//size,pos[0]//size]=2
-                    immunize(pos[1]//size,pos[0]//size,cell_infprogress)
-                    update (screen,cells,size,cell_infprogress, c, noiseArray, False, False)
-                    pygame.display.update()
-                    
-                elif keys[pygame.K_LCTRL]:     #Control-left-click kills a cell
-                    cells [pos[1]//size,pos[0]//size]=4
-                    cell_infprogress[pos[1]//size,pos[0]//size]=0
-                    update (screen,cells,size,cell_infprogress, c, noiseArray, False, False)
-                    pygame.display.update()
-                else:   #Regular left click infects a cell
-                    cells [pos[1]//size,pos[0]//size]=1
-                    infect(pos[1]//size,pos[0]//size,cell_infprogress)
-                    update (screen,cells,size,cell_infprogress, c, noiseArray, False, False)
-                    pygame.display.update()
-            if pygame.mouse.get_pressed()[2]:   #Right click returns a cell to normal. 
-                pos = pygame.mouse.get_pos()
-                cells [pos[1]//size,pos[0]//size]=0
-                cell_infprogress[pos[1]//size,pos[0]//size]=0
-                update (screen,cells,size,cell_infprogress, c, noiseArray, False, False)
-                pygame.display.update()
 
-        if np.count_nonzero(cells == 1)+np.count_nonzero(cells == 6)==0 and c > 1:
-            x = 0
-            print("There are no more infected cells.")
-        screen.fill(Color_Grid)
-        if running and x>0:
-            x -= 1
-            c+=1 #counter to keep track of at what step we are
-            cells, cell_infprogress = update(screen, cells,size, cell_infprogress, c, noiseArray, with_progress=True)
-            pygame.display.update()
-        #once all timesteps done it stops so you can look at the end
-        elif x == 0:
-            running = False
-            update (screen, cells, size, cell_infprogress, c, noiseArray, with_progress=True)
-            pygame.display.update()
-            if c == timesteps: 
-                print(" total timesteps done:", c)
-            elif c > timesteps:
-                print ("another "+ str(timesteps) + " timesteps done")
-                print(" total timesteps done:", c)
-            print("stopped.")
-            #loop to "stop" the thing to look at current state after time steps
-            while True:
-                event = pygame.event.wait()
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE: #press space to start
-                        running = not running
-                        update (screen, cells, size, cell_infprogress, c, noiseArray)
-                        pygame.display.update()
-                        x = timesteps
-                        if running == True:
-                            print ("running.")
-                        elif running == False:
-                            print ("paused.")
-                            break
-                    if event.key == pygame.K_r: #press R to clear field
-                        running = False
-                        c=0
-                        x= timesteps
-                        cells = np.zeros((w,h))
-                        cell_infprogress = np.zeros((w,h))
-                        update (screen, cells, size, cell_infprogress, c, noiseArray)
-                        pygame.display.update()
-                        print ("cleared field")
-                        break
-            continue
-        
-                    
-            
-
-        time.sleep(0.05)
-       
-if __name__== '__main__':
-    main()
+pyplot.plot(t,Slist, label = "Susceptible", linestyle ="-")
+pyplot.plot(t,Inclist, label = "Incubated", linestyle ="-")
+pyplot.plot(t,Inflist, label = "Infected", linestyle ="-")
+pyplot.plot(t,Imlist, label = "Immune", linestyle ="-")
+pyplot.plot(t,Dlist, label = "Dead", linestyle ="-")
+pyplot.legend()
+pyplot.show()
+'''
