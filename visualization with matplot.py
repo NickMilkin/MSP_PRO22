@@ -1,4 +1,4 @@
-
+import pygsheets
 from matplotlib import pyplot
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -8,6 +8,11 @@ from perlin_noise import PerlinNoise
 import pandas as pd
 from timeit import default_timer, timeit
 
+#google sheets variables
+file_id = '1w17xSO4v-7WH8LX8_0yLnUSIUMR07nOET6M6n80ZiEw' #IMPORTANT! selects file to edit. This is part of the URL of the file.
+client = pygsheets.authorize(service_account_file='automaton-project-ec4be5ef0418.json') #google sheets authorization JSON name and location. You need to download this from github and it has to be in the same directory as this program.
+sheet = client.open_by_key(file_id) #opens file 
+page = 0 #sets working page number. IMPORTANT! Set to 0 for ebola, 1 for flu, 2 for covid, 3 for H1N1.
 
 # color values
 Color_BG=(60, 60, 60)
@@ -43,10 +48,10 @@ susceptibility_effect = 3           # controls influence of the susceptibility m
 
 
 # size:
-w = 500
-h = 500
+w = 20
+h = 20
 p = 0.001
-timesteps = 100  # int(input())
+timesteps = 10  # int(input())
 simulationnr = 5
 infectedstart = 49
 
@@ -302,12 +307,12 @@ print('Averaging data.')
 final_data = np.zeros((timesteps + 1, 5))            # gives you averaged out array
 for timesteps, states in np.ndindex(final_data.shape):
     final_data[timesteps, states] = average_value(DATA, timesteps, states)
-print("saving.")
-filename = 'Simulatioon.xlsx'
-df = pd.DataFrame(final_data[:, :])                 # this spits out the array above as an excel sheet, did not figure out how to do headers
-df.to_excel('Simulatioon.xlsx', index=False, header=False)
-print("saved as " + filename)
-print("done.")
+print ("saving...")
+sheet[page].refresh() #refreshes sheet to minimize overwrite chance
+sheet[page].update_values('A2',final_data.tolist()) #saves to google sheets starting at cell A2
+print(final_data)
+print ("saved to page "+str(page)+" of file \'"+ sheet.title+"\' with id=\'"+file_id+"\'")
+print ("done.")
 # reminder for the columns [susceptible,incubated, infected, immune, dead]
 
 
