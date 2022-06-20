@@ -6,17 +6,18 @@ from numpy import newaxis
 import random
 from perlin_noise import PerlinNoise
 import pandas as pd
+from timeit import default_timer, timeit
 
 
 # color values
 Color_BG=(60, 60, 60)
 Color_Grid = (90, 90, 90)
-#Color_Die_Next =(150, 50, 50)      # color of cells that die the next generation
-Color_alive_next =(175, 75, 75)     # color of cells that turn alive next generation
+# Color_Die_Next =(150, 50, 50)     # color of cells that die the next generation
+Color_alive_next = (175, 75, 75)    # color of cells that turn alive next generation
 Color_immune = (100, 160, 160)      # color of immune cells at max immunity
 Color_dead = (5, 5, 5)
 Color_text = (50, 255, 50)
-Color_incub = (190,120,120)         # color of incubating cell
+Color_incub = (190, 120, 120)       # color of incubating cell
 useGrid = False                     # Toggle grid display
 
 defaultNumSteps = 1000
@@ -50,22 +51,38 @@ simulationnr = 5
 infectedstart = 49
 
 
-def infect (row, col, return_matrix, noise):                                        # infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
-    return_matrix[row,col] = round(random.gauss(infection_length, infection_dev))   # decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
+# this is a decorator to measure time taken for a function to execute
+def time_it(func):
+    def wrapper(*args, **kwargs):
+        start_time = default_timer()
+        result = func(*args, **kwargs)
+        print(f'{func.__name__} function just took {round(default_timer() - start_time, 6)} sec to execute')
+        return result
+    return wrapper
+
+
+# infects a target cell using the infection counter and updates it to the return matrix  (normally, one of the progress matrices)
+def infect(row, col, return_matrix, noise):
+    return_matrix[row, col] = round(random.gauss(infection_length, infection_dev))
+    # decides how long the infection lasts, adds to progress matrix. Gaussian distribution.
     pass
 
 
-def immunize (row, col, return_matrix):                                             # immunizes a target cell using the immunization counter and updates it to the return matrix (normally, one of the progress matrices)
-    return_matrix[row,col] = round(random.gauss(immune_mean, immune_dev))           # decides strength of initial immunization, adds to progress matrix. Gaussian distribution.
+# immunizes a target cell using the immunization counter and updates it to the return matrix (normally, one of the progress matrices)
+def immunize(row, col, return_matrix):
+    return_matrix[row, col] = round(random.gauss(immune_mean, immune_dev))
+    # decides strength of initial immunization, adds to progress matrix. Gaussian distribution.
     pass
 
 
-def incubate (row, col, return_matrix, noise):                                      # incubates a target cell using the incubation counter and--y'know what, you get it by now
+# incubates a target cell using the incubation counter and--y'know what, you get it by now
+def incubate(row, col, return_matrix, noise):
     return_matrix[row,col] = round(random.gauss(incub_length, incub_dev))
     pass
 
 
-def update (cells, cell_infprogress, noise, is_running=1, show_noise=0):
+@time_it  # decorate any function in this way to print out its time to execute
+def update(cells, cell_infprogress, noise, is_running=1, show_noise=0):
     
     updated_cells = np.zeros((cells.shape[0], cells.shape[1]))
     updated_infprogress = cell_infprogress
@@ -152,6 +169,7 @@ def update (cells, cell_infprogress, noise, is_running=1, show_noise=0):
 # _________________________________________________________________________
 
 
+@time_it
 def start_with_x(x):    # function that generates a grid with specific number of infected
         REPLACE_COUNT = int(x)
         REPLACE_WITH = 1
@@ -161,6 +179,7 @@ def start_with_x(x):    # function that generates a grid with specific number of
         return cells
 
 
+@time_it
 def count(array):       # counts different states
 
     incubated = np.count_nonzero((array == 6))  
@@ -173,6 +192,7 @@ def count(array):       # counts different states
     return data
 
 
+@time_it
 def get_graphable_data():  # gives you this whole thing as a string
     gdata = '' 
     for i in range(arraylist.shape[2]):
@@ -183,6 +203,7 @@ def get_graphable_data():  # gives you this whole thing as a string
     return gdata 
 
 
+@time_it
 def get_graphable_data_array(array):  # gives you this whole thing as a string
     gdata = np.array([])
     # gdata = gdata[:,newaxis]
@@ -196,11 +217,13 @@ def get_graphable_data_array(array):  # gives you this whole thing as a string
     return gdata
 
 
+@time_it
 def x_values(matrix, i): # function takes a column of matrix and turns it into list
     xlist = matrix[:, i]
     return xlist.flatten()
 
 
+@time_it
 def average_value (array, timestep, state): # gives you the array with averaged values
     value = 0
     for numbers_of_simulation in range(1, simc):
@@ -212,6 +235,7 @@ def average_value (array, timestep, state): # gives you the array with averaged 
 # _____________________________________________________________________
 
 
+@time_it
 def normalize(array):
     norm_array = []
     diff_array = np.max(array) - np.min(array)    
@@ -270,11 +294,11 @@ while simulationnr > 0:
         c += 1
     
     Graph = np.array([get_graphable_data_array(arraylist)])
-    DATA= np.concatenate((DATA, Graph), 0)
+    DATA = np.concatenate((DATA, Graph), 0)
     simulationnr -= 1
     simc += 1
 
-print ('Averaging data.')
+print('Averaging data.')
 final_data = np.zeros((timesteps + 1, 5))            # gives you averaged out array
 for timesteps, states in np.ndindex(final_data.shape):
     final_data[timesteps, states] = average_value(DATA, timesteps, states)
