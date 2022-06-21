@@ -10,7 +10,7 @@ from timeit import default_timer, timeit
 
 #google sheets variables
 file_id = '1w17xSO4v-7WH8LX8_0yLnUSIUMR07nOET6M6n80ZiEw' #IMPORTANT! selects file to edit. This is part of the URL of the file.
-client = pygsheets.authorize(service_account_file='automaton-project-ec4be5ef0418.json') #google sheets authorization JSON name and location. You need to download this from github and it has to be in the same directory as this program.
+client = pygsheets.authorize(service_account_file='automaton-project-fcd38a1fd1bf.json') #google sheets authorization JSON name and location. You need to download this from github and it has to be in the same directory as this program.
 sheet = client.open_by_key(file_id) #opens file 
 page = 0 #sets working page number. IMPORTANT! Set to 0 for ebola, 1 for flu, 2 for covid, 3 for H1N1.
 
