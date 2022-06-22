@@ -112,7 +112,7 @@ elif inp == '4':
     susceptibility_effect = 3
     print('Parameters for H1N1 initialized.')
 else:
-    page=4
+    page=5
     print('Custom parameters initialized.')
 
 # size:
