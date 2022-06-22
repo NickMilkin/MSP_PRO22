@@ -71,7 +71,7 @@ if inp == '1':
     timesteps = 639
     w = 474
     h = 474 #Each cell = 10 people
-    infectedstart = 1
+    infectedstart = 12
     print('Parameters for ebola initialized.')
 elif inp == '2':
     page = 1
