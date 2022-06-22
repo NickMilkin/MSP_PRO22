@@ -111,7 +111,7 @@ elif inp == '3':
     timesteps = 124
     w = 381
     h = 381 #Each cell = 100 people
-    infectedstart = 1
+    infectedstart = 7
     print('Parameters for COVID-19 initialized.')
 elif inp == '4':
     page = 3
