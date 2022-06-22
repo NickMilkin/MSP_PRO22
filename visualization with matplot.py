@@ -45,7 +45,75 @@ immune_fade = 0.02                  # amount(as a % of maximum immunity(1), not 
 immunity_disp_thresh = 0.5          # Threshold of immunity above which the counter text considers a cell to be "immune". Only affects counter text.
 susceptibility_effect = 3           # controls influence of the susceptibility matrix. 0 = no effect.
 # ______________________________
-
+#PRESETS
+inp = input("Select a preset. Type '1' for ebola, '2' for influenza, '3' for COVID-19, and '4' for H1N1. Other answers will default to current custom parameters.\n>>>")
+if inp == '1':
+    page = 0
+    ppi_chance = 0.02                   
+    infection_range = 1                
+    infection_length = 20               
+    infection_dev = 3                   
+    death_chance = 0.01                 
+    incub_length = 3                   
+    incub_dev = 1                      
+    immunization_chance = 0            
+    immune_mean = 0.90                  
+    immune_dev = 0.05                   
+    immune_fade = 0.02                  
+    immunity_disp_thresh = 0.5          
+    susceptibility_effect = 3
+    print('Parameters for ebola initialized.')
+elif inp == '2':
+    page = 1
+    ppi_chance = 0.02                   
+    infection_range = 1                
+    infection_length = 20               
+    infection_dev = 3                   
+    death_chance = 0.01                 
+    incub_length = 3                   
+    incub_dev = 1                      
+    immunization_chance = 0            
+    immune_mean = 0.90                  
+    immune_dev = 0.05                   
+    immune_fade = 0.02                  
+    immunity_disp_thresh = 0.5          
+    susceptibility_effect = 3
+    print('Parameters for influenza initialized.')
+elif inp == '3':
+    page = 2
+    ppi_chance = 0.02                   
+    infection_range = 1                
+    infection_length = 20               
+    infection_dev = 3                   
+    death_chance = 0.01                 
+    incub_length = 3                   
+    incub_dev = 1                      
+    immunization_chance = 0            
+    immune_mean = 0.90                  
+    immune_dev = 0.05                   
+    immune_fade = 0.02                  
+    immunity_disp_thresh = 0.5          
+    susceptibility_effect = 3
+    print('Parameters for COVID-19 initialized.')
+elif inp == '4':
+    page = 3
+    ppi_chance = 0.02                   
+    infection_range = 1                
+    infection_length = 20               
+    infection_dev = 3                   
+    death_chance = 0.01                 
+    incub_length = 3                   
+    incub_dev = 1                      
+    immunization_chance = 0            
+    immune_mean = 0.90                  
+    immune_dev = 0.05                   
+    immune_fade = 0.02                  
+    immunity_disp_thresh = 0.5          
+    susceptibility_effect = 3
+    print('Parameters for H1N1 initialized.')
+else:
+    page=4
+    print('Custom parameters initialized.')
 
 # size:
 w = 20
