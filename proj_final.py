@@ -95,7 +95,7 @@ elif inp == '2':
     print('Parameters for influenza initialized.')
 elif inp == '3':
     page = 2
-    ppi_chance = 0.0 336                  
+    ppi_chance = 0.0336                  
     infection_range = 1                
     infection_length = 10               
     infection_dev =  4                  
