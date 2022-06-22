@@ -108,7 +108,7 @@ elif inp == '3':
     immune_fade = 0.000625                  
     immunity_disp_thresh = 0.5          
     susceptibility_effect = 3
-    timesteps = 730
+    timesteps = 124
     w = 381
     h = 381 #Each cell = 100 people
     infectedstart = 1
