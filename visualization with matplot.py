@@ -154,6 +154,7 @@ def update(cells, cell_infprogress, noise, is_running=1, show_noise=0):
                     if cell_infprogress[row, col] > 0:
                         if is_running:
                             updated_infprogress[row, col] -= immune_fade    # fade immunity
+                            updated_infprogress[row,col] = updated_infprogress[row,col]%1
                         # if with_progress:
                             # color= (min(Color_BG[0],Color_immune[0])+cell_infprogress[row,col]*abs(Color_BG[0]-Color_immune[0]),min(Color_BG[1],Color_immune[1])+cell_infprogress[row,col]*abs(Color_BG[1]-Color_immune[1]),min(Color_BG[2],Color_immune[2])+cell_infprogress[row,col]*abs(Color_BG[2]-Color_immune[2]))
                     else:
