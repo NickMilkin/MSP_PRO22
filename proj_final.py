@@ -88,10 +88,10 @@ elif inp == '2':
     immune_fade = 0.00538                  
     immunity_disp_thresh = 0.5          
     susceptibility_effect = 3
-    timesteps = 730
+    timesteps = 224
     w = 226
     h = 226 #Each cell = 100 people
-    infectedstart = 1
+    infectedstart = 1326
     print('Parameters for influenza initialized.')
 elif inp == '3':
     page = 2
